@@ -164,6 +164,39 @@ tr:nth-child(even) td { background: #f8f9fa; }
 .cross { color: #ddd; }
 /* Separator */
 .sep { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+/* Floating nav (back-to-top + jump-to-TOC) */
+.fab-nav { position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.fab-nav.visible { opacity: 1; pointer-events: auto; }
+.fab-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--navy); color: #fff; text-decoration: none; font-size: 14px; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: none; cursor: pointer; }
+.fab-btn:hover { background: var(--blue); }
+.fab-btn .fab-label { font-size: 10px; letter-spacing: 0.5px; }
+@media print { .fab-nav { display: none; } }
+/* Expand/collapse-all toggle (for detail-heavy sections) */
+.details-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: var(--blue); background: var(--sky); border: 1px solid var(--border); border-radius: 14px; cursor: pointer; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+.details-toggle:hover { background: #dfe9f7; }
+.details-toggle[aria-pressed="true"] { background: var(--blue); color: #fff; border-color: var(--blue); }
+@media print { .details-toggle { display: none; } }
+/* Version lineage diagram */
+.lineage { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 14px 16px; background: #f8f9fa; border: 1px solid var(--border); border-radius: 6px; margin: 4px 0 0; font-size: 12px; font-family: 'SF Mono', Consolas, Monaco, monospace; }
+.lineage-node { padding: 4px 10px; border-radius: 4px; background: #fff; border: 1px solid var(--border); color: var(--slate); white-space: nowrap; }
+.lineage-node.current { border-color: #4da6ff; background: #eaf3ff; color: var(--navy); font-weight: 700; }
+.lineage-node.branch { border-style: dashed; color: var(--muted); }
+.lineage-arrow { color: var(--muted); font-weight: 700; }
+.lineage-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; margin-left: 2px; }
+/* Collapsible details */
+details { margin: 10px 0 18px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+details summary { padding: 10px 14px; cursor: pointer; font-weight: 600; color: var(--blue); font-size: 14px; list-style: none; user-select: none; }
+details summary::-webkit-details-marker { display: none; }
+details summary::before { content: '\25B8'; display: inline-block; font-size: 11px; margin-right: 8px; transition: transform 0.15s; color: var(--muted); }
+details[open] summary::before { transform: rotate(90deg); }
+details summary:hover { background: #f8f9fa; }
+details[open] summary { border-bottom: 1px solid var(--border); }
+details > *:not(summary) { padding: 0 16px; }
+details > *:not(summary):first-of-type { padding-top: 10px; }
+details > *:not(summary):last-child { padding-bottom: 14px; }
+details table { margin: 4px 0 0; }
+details ul, details ol { padding-left: 34px; }
+details li { margin-bottom: 4px; }
 
 /* Responsive — mobile only (desktop untouched) */
 @media (max-width: 768px) {
@@ -238,6 +271,17 @@ tr:nth-child(even) td { background: #f8f9fa; }
 
   /* Separators: less margin */
   .sep { margin: 28px 0; }
+
+  /* Floating nav: bottom-right, same size — already touch-friendly at 44px */
+  .fab-nav { right: 14px; bottom: 14px; gap: 6px; }
+
+  /* Expand-all toggle: full width on small screens for easy tap */
+  .details-toggle { width: 100%; justify-content: center; padding: 8px 12px; font-size: 12px; }
+
+  /* Version lineage: stack vertically on mobile */
+  .lineage { flex-direction: column; align-items: flex-start; padding: 12px; gap: 4px; font-size: 11px; }
+  .lineage-arrow { transform: rotate(90deg); padding-left: 10px; }
+  .lineage-row { display: flex; align-items: center; gap: 6px; }
 }
 
 /* Small phones (< 400px) */
@@ -251,7 +295,7 @@ tr:nth-child(even) td { background: #f8f9fa; }
 }
 </style>
 </head>
-<body>
+<body id="top">
 <!-- ============================================================ -->
 <!-- COVER PAGE -->
 <!-- ============================================================ -->
@@ -293,7 +337,7 @@ tr:nth-child(even) td { background: #f8f9fa; }
   <div class="divider"></div>
   <div class="meta">
     <span style="font-size:13px;opacity:0.6;">Lead Developer &mdash; @hacisonline</span><br><br>
-    <strong>V0 (Preliminary) through V5.7.2</strong><br>
+    <strong>V0 (Preliminary) through V5.8</strong><br>
     January 13 &ndash; Present
   </div>
   <div class="badge">EMSE 6099 Capstone Project</div>
@@ -303,7 +347,7 @@ tr:nth-child(even) td { background: #f8f9fa; }
 <!-- ============================================================ -->
 <!-- TABLE OF CONTENTS -->
 <!-- ============================================================ -->
-<div class="toc section">
+<div class="toc section" id="toc">
   <h2>Table of Contents</h2>
   <div class="toc-grid">
     <a href="#overview"><span class="toc-num">01</span> Project Overview</a>
@@ -317,11 +361,13 @@ tr:nth-child(even) td { background: #f8f9fa; }
     <a href="#phase6"><span class="toc-num">09</span> Phase 6: Stabilization &amp; Packaging</a>
     <a href="#phase7"><span class="toc-num">10</span> Phase 7: Calibration &amp; Cleanup</a>
     <a href="#phase8"><span class="toc-num">11</span> Phase 8: Compare Mode &amp; Twin Engine</a>
-    <a href="#versions"><span class="toc-num">12</span> Detailed Version Changelog</a>
-    <a href="#features"><span class="toc-num">13</span> Feature Evolution Matrix</a>
-    <a href="#architecture"><span class="toc-num">14</span> Technical Architecture</a>
-    <a href="#research"><span class="toc-num">15</span> Research Documents Produced</a>
-    <a href="#lessons"><span class="toc-num">16</span> Lessons Learned</a>
+    <a href="#phase9"><span class="toc-num">12</span> Phase 9: Audit &amp; Financial-Logic Hardening</a>
+    <a href="#phase10"><span class="toc-num">13</span> Phase 10: V6 Development (Active)</a>
+    <a href="#versions"><span class="toc-num">14</span> Detailed Version Changelog</a>
+    <a href="#features"><span class="toc-num">15</span> Feature Evolution Matrix</a>
+    <a href="#architecture"><span class="toc-num">16</span> Technical Architecture</a>
+    <a href="#research"><span class="toc-num">17</span> Research Documents Produced</a>
+    <a href="#lessons"><span class="toc-num">18</span> Lessons Learned</a>
   </div>
 </div>
 <hr class="sep">
@@ -332,9 +378,9 @@ tr:nth-child(even) td { background: #f8f9fa; }
   <h2>01 &middot; Project Overview</h2>
   <p>This active build log documents the full development history of TESSERACT TWIN &mdash; the Mumbai Real Estate Execution-Risk Digital Twin &mdash; from initial concept through the current production release. The project was developed as part of the EMSE 6099 Capstone at The George Washington University during Spring 2026 and continues as a proprietary commercial product.</p>
   <div class="fact-strip">
-    <div class="fact-card"><div class="fact-val">405</div><div class="fact-label">Variables</div></div>
+    <div class="fact-card"><div class="fact-val">411</div><div class="fact-label">Variables</div></div>
     <div class="fact-card"><div class="fact-val">9</div><div class="fact-label">Zones</div></div>
-    <div class="fact-card"><div class="fact-val">22</div><div class="fact-label">Version Iterations</div></div>
+    <div class="fact-card"><div class="fact-val">24</div><div class="fact-label">Version Iterations</div></div>
     <div class="fact-card"><div class="fact-val">574</div><div class="fact-label">Automated Tests</div></div>
   </div>
   <div class="info-box cyan">
@@ -347,7 +393,7 @@ tr:nth-child(even) td { background: #f8f9fa; }
   <h3>Deliverables Produced</h3>
   <table>
     <tr><th>Deliverable</th><th>Format</th><th>Status</th></tr>
-    <tr><td>Interactive Digital Twin Dashboard</td><td>Single-file HTML/CSS/JS (~266 KB)</td><td><span class="tag tag-cyan">Production V5.7.2</span></td></tr>
+    <tr><td>Interactive Digital Twin Dashboard</td><td>Single-file HTML/CSS/JS (~270 KB)</td><td><span class="tag tag-cyan">Production V5.8</span></td></tr>
     <tr><td>Parallel Excel Model</td><td>12-sheet XLSX (500+ formulas)</td><td><span class="tag tag-green">V5.5 Stable</span></td></tr>
     <tr><td>Electron Desktop Application</td><td>macOS DMG (Electron v31)</td><td><span class="tag tag-blue">Packaged</span></td></tr>
     <tr><td>Node.js Backend API</td><td>Express + SQLite</td><td><span class="tag tag-blue">Functional</span></td></tr>
@@ -362,7 +408,7 @@ tr:nth-child(even) td { background: #f8f9fa; }
 <!-- ============================================================ -->
 <div class="section" id="timeline">
   <h2>02 &middot; Development Timeline</h2>
-  <p>The project spans active development organized into eight phases. Academic milestones (proposals, progress reports) were interleaved with technical development sprints. Phase 8 represents the ongoing product evolution beyond the capstone scope.</p>
+  <p>The project spans active development organized into ten phases. Academic milestones (proposals, progress reports) were interleaved with technical development sprints. Phases 8 through 10 represent the ongoing product evolution beyond the capstone scope &mdash; first the Compare Mode / Twin Engine expansion, then a dedicated audit and financial-logic hardening pass informed by live deal screening on Webtech Realty&rsquo;s own project pipeline, and a planned V6 rebuild that will migrate the debt-accrual timeline onto the same calendar axis V5.8 uses for equity cash-flows.</p>
   <div class="timeline">
     <div class="tl-item done">
       <div class="tl-date">Jan 13 &ndash; Feb 1</div>
@@ -399,15 +445,25 @@ tr:nth-child(even) td { background: #f8f9fa; }
       <div class="tl-title">Phase 7: Calibration &amp; Code Cleanup</div>
       <div class="tl-desc">V5.6.1 FSI calibration, V5.6.2 code cleanup, 574-check test suite</div>
     </div>
-    <div class="tl-item active">
-      <div class="tl-date">Apr 3 &ndash; Present</div>
+    <div class="tl-item done">
+      <div class="tl-date">Apr 3 &ndash; Apr 6</div>
       <div class="tl-title">Phase 8: Compare Mode &amp; Twin Engine</div>
-      <div class="tl-desc">V5.6.3 &ndash; V5.7.2: Iframe-isolated dual sessions, branded compare overlay, score gauges, postMessage IPC, Tesseract branding &amp; marketing assets</div>
+      <div class="tl-desc">V5.6.3 &ndash; V5.7.2: Iframe-isolated dual sessions, branded compare overlay, score gauges, postMessage IPC, Tesseract branding &amp; marketing assets, sticky compare-close flag correction</div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-date">Apr 6 &ndash; Apr 21</div>
+      <div class="tl-title">Phase 9: Audit &amp; Financial-Logic Hardening</div>
+      <div class="tl-desc">V5.7.3 &ndash; V5.8: Two-pass audit (live input/output propagation + code-read financial logic), six in-place fixes to V5.7.2, then V5.8 as a new file with calendar-axis IRR, deployed-equity MOIC/ROE, tornado magnitudes, stamp-duty RR basis, per-stage soft costs, and a one-click analytics PDF export (Apr 21)</div>
+    </div>
+    <div class="tl-item active">
+      <div class="tl-date">Apr 21 &ndash; Present</div>
+      <div class="tl-title">Phase 10: V6 Development &mdash; Interest-Accrual Calendar Rebuild</div>
+      <div class="tl-desc">Scoping and implementation of the planned V6 enhancement: rebuilding debt-accrual on the same calendar axis V5.8 uses for equity cash-flows. Separate V6 branch.</div>
     </div>
   </div>
   <div class="info-box cyan">
-    <div class="ib-title">Active Development</div>
-    <p>Phase 8 represents the transition from academic capstone to commercial product. The Compare Mode feature &mdash; enabling side-by-side scenario analysis &mdash; was the single most architecturally complex addition since the platform pivot, requiring iframe isolation, postMessage IPC, and persistent session management without refactoring the ~2,500-line global state engine.</p>
+    <div class="ib-title">Phase 10 Focus: V6 &mdash; Interest-Accrual Calendar Rebuild</div>
+    <p>Phase 8 carried the platform from academic capstone into commercial product territory. Compare Mode &mdash; side-by-side scenario analysis via iframe isolation &mdash; was the most architecturally complex addition since the platform pivot. Phase 9 then shifted focus from feature expansion to engine correctness: a systematic audit of <code>recalculate()</code> against Mumbai RE conventions (Maharashtra Stamp Act, RERA escrow, DCPR 2034, Ready Reckoner rates), shipped across V5.7.3 and V5.8. Phase 10 is the planned V6 enhancement: V5.8 rebuilt the <em>equity</em> cash-flow on a calendar-month axis; V6 does the same for the <em>debt-accrual</em> timeline so the interest row is indexed on the same unified clock. V5.8 remains the production file during V6 development; a separate branch tracks the rebuild.</p>
   </div>
 </div>
 <hr class="sep">
@@ -416,7 +472,7 @@ tr:nth-child(even) td { background: #f8f9fa; }
 <!-- ============================================================ -->
 <div class="section" id="complexity">
   <h2>03 &middot; Model Complexity Evolution</h2>
-  <p>The model grew from a 3-sheet preliminary spreadsheet to a ~2,840-line interactive digital twin across 22 iterations. The chart below tracks growth alongside feature accumulation, with four distinct inflection points: the initial Excel build, the platform pivot to HTML, the Digital Twin sprint, and the Compare Mode expansion.</p>
+  <p>Growth from a 3-sheet preliminary spreadsheet to the current interactive digital twin, across 24 iterations. Inflection points are annotated in the info box below.</p>
   <div class="chart-container">
     <h4>Codebase Growth &amp; Feature Accumulation</h4>
     <canvas id="complexityChart" height="100"></canvas>
@@ -426,11 +482,13 @@ tr:nth-child(even) td { background: #f8f9fa; }
     <canvas id="sizeChart" height="100"></canvas>
   </div>
   <div class="info-box purple">
-    <div class="ib-title">Four Inflection Points</div>
+    <div class="ib-title">Six Inflection Points</div>
     <p><strong>Feb 24-25 (Excel Sprint):</strong> Went from a blank sheet to a 9-sheet, 358-formula execution risk model in under 48 hours. The stage-gated architecture was established here and never changed.</p>
     <p><strong>Mar 5-13 (Platform Pivot):</strong> First HTML dashboard built, proving the entire financial model could run client-side with real-time recalculation. Point of no return for the interactive approach.</p>
     <p><strong>Mar 18-22 (Digital Twin Sprint):</strong> Five consecutive days producing seven version increments. Added interactive map, DR strategy, dark mode, and CC staging. Codebase tripled from 900 to 2,192 lines.</p>
     <p><strong>Apr 3-4 (Compare Mode):</strong> Four versions in two days. Introduced iframe-isolated dual sessions, branded compare overlay, postMessage IPC for score gauges and dark mode sync. Codebase grew from 2,559 to ~2,840 lines.</p>
+    <p><strong>Apr 6-20 (Financial-Logic Hardening):</strong> A two-week audit-and-edit pass. Two distinct audit techniques &mdash; black-box input perturbation with DOM diff, and a line-by-line code read of <code>recalculate()</code> &mdash; produced a combined catalogue graded High/Medium/Low. Six were patched into V5.7.3 in place, five more shipped in V5.8 as a new file with the calendar-axis cash-flow rebuild, deployed-equity MOIC/ROE, rebuilt tornado magnitudes, RR-basis stamp duty, and per-stage soft costs. Codebase grew from ~2,840 to ~3,040 lines while the financial engine became materially more correct.</p>
+    <p><strong>Apr 20 &ndash; Present (V6 Rebuild):</strong> Scope tightened to a single structural task: port the debt-accrual timeline onto the same calendar axis V5.8 uses for equity cash-flows, so the interest row is indexed on the same unified clock. Line-count impact is expected to be modest &mdash; the work is a refactor of the existing interest calculation rather than a new feature &mdash; but it completes the financial engine&rsquo;s migration to a single unified time axis.</p>
   </div>
 </div>
 <hr class="sep">
@@ -440,18 +498,23 @@ tr:nth-child(even) td { background: #f8f9fa; }
 <div class="section" id="phase1">
   <h2>04 &middot; Phase 1: Problem Structuring &amp; Research</h2>
   <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">January 13 &ndash; February 1, 2026</p>
-  <p>The project began with the spring semester on January 13. The first two weeks were spent defining the problem space, conducting a literature review on real estate project risk frameworks, and engaging our industry partner. I reached out to Webtech Realty in Mumbai to secure access to structured project data from their completed and ongoing developments, including The Presidential (a major commercial project).</p>
-  <p>The pre-proposal was submitted on January 17, followed by the full written proposal on January 27. The oral proposal presentation established the scope and methodology for the capstone committee.</p>
-  <div class="info-box success">
-    <div class="ib-title">Key Decision: Stage-Gated Architecture</div>
-    <p>Chose a <strong>6-stage gate model</strong> (Feasibility, Land Lock-in, Regulatory, CC Approval, Construction, Completion) over a continuous timeline approach. This aligned with how developers, lenders, and regulators in Mumbai actually structure project progression. Every subsequent model version preserved this architecture.</p>
-  </div>
+  <p>Opened the capstone with scope definition, literature review on real-estate project-risk frameworks, industry partnership with Webtech Realty, and committee alignment on a 6-stage gate architecture that every subsequent version preserved.</p>
   <table>
-    <tr><th>Deliverable</th><th>Date</th><th>Purpose</th></tr>
-    <tr><td>Pre-Proposal</td><td>Jan 17</td><td>Initial scope definition for committee review</td></tr>
-    <tr><td>EMSE6099_Proposal.docx</td><td>Jan 27</td><td>Full project proposal with objectives, methodology, timeline</td></tr>
-    <tr><td>Oral Proposal Presentation</td><td>Jan 27</td><td>Committee presentation and feedback</td></tr>
+    <tr><th>Milestone</th><th>Date</th><th>Key outcome</th></tr>
+    <tr><td>Pre-Proposal</td><td>Jan 17</td><td>Initial scope submitted to committee</td></tr>
+    <tr><td>Full Proposal (EMSE6099)</td><td>Jan 27</td><td>Objectives, methodology, timeline approved</td></tr>
+    <tr><td>Oral Proposal</td><td>Jan 27</td><td>Committee presentation and feedback</td></tr>
+    <tr><td>Architecture decision</td><td>Jan 2026</td><td>6-stage gate model adopted (Feasibility &rarr; Completion)</td></tr>
   </table>
+  <details>
+    <summary>Narrative &amp; key decisions</summary>
+    <p>The project began with the spring semester on January 13. The first two weeks were spent defining the problem space, conducting a literature review on real estate project risk frameworks, and engaging our industry partner. I reached out to Webtech Realty in Mumbai to secure access to structured project data from their completed and ongoing developments, including The Presidential (a major commercial project).</p>
+    <p>The pre-proposal was submitted on January 17, followed by the full written proposal on January 27. The oral proposal presentation established the scope and methodology for the capstone committee.</p>
+    <div class="info-box success">
+      <div class="ib-title">Key Decision: Stage-Gated Architecture</div>
+      <p>Chose a <strong>6-stage gate model</strong> (Feasibility, Land Lock-in, Regulatory, CC Approval, Construction, Completion) over a continuous timeline approach. This aligned with how developers, lenders, and regulators in Mumbai actually structure project progression. Every subsequent model version preserved this architecture.</p>
+    </div>
+  </details>
 </div>
 <hr class="sep">
 <!-- ============================================================ -->
@@ -460,17 +523,20 @@ tr:nth-child(even) td { background: #f8f9fa; }
 <div class="section" id="phase2">
   <h2>05 &middot; Phase 2: System Architecture &amp; Flow Modeling</h2>
   <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">February 3 &ndash; February 17, 2026</p>
-  <p>Before writing any model code, this phase established the system architecture through visual diagrams and reference documents. I created two major flow diagrams: a regulatory-construction flow mapping the Mumbai development approval process (IOD, CC, OC sequences), and a financial flow diagram showing capital movement through the six stages.</p>
-  <p>The cost structure was documented in two comprehensive reference documents covering per-sqft benchmarks for every cost component. Sources included the Council of Architecture (COA), CBRE, Colliers International, DCPR 2034, MahaRERA public data, BMC schedules, and Ready Reckoner rates from IGR Maharashtra.</p>
+  <p>Established system architecture through visual flow diagrams and a Mumbai cost-structure reference before any model code was written.</p>
   <table>
-    <tr><th>Deliverable</th><th>Date</th><th>Purpose</th></tr>
-    <tr><td>Flow Analysis Diagram</td><td>Feb 16</td><td>Regulatory-construction flow mapping</td></tr>
+    <tr><th>Milestone</th><th>Date</th><th>Key outcome</th></tr>
+    <tr><td>Flow Analysis Diagram</td><td>Feb 16</td><td>Regulatory-construction flow (IOD, CC, OC sequences)</td></tr>
     <tr><td>Decision Layer Flow Diagram</td><td>Feb 17</td><td>Decision-based branch logic at each stage gate</td></tr>
-    <tr><td>Mumbai_RE_Cost_Structure_INR.docx</td><td>Feb 17</td><td>Per-sqft cost benchmarks in Indian Rupees</td></tr>
-    <tr><td>Mumbai_RE_Cost_Structure_USD.docx</td><td>Feb 17</td><td>USD version for international presentation</td></tr>
-    <tr><td>Gantt Chart v1 &amp; v2</td><td>Feb 14-17</td><td>Project schedule with adaptive resequencing</td></tr>
+    <tr><td>Cost Structure Docs (INR + USD)</td><td>Feb 17</td><td>Per-sqft benchmarks from COA, CBRE, Colliers, DCPR 2034, MahaRERA, BMC, IGR</td></tr>
+    <tr><td>Gantt Charts v1 &amp; v2</td><td>Feb 14-17</td><td>Project schedule with adaptive resequencing</td></tr>
     <tr><td>Oral Progress Report #1</td><td>Feb 17</td><td>Architecture and methodology presentation to committee</td></tr>
   </table>
+  <details>
+    <summary>Architecture flows &amp; cost reference</summary>
+    <p>Before writing any model code, this phase established the system architecture through visual diagrams and reference documents. Two major flow diagrams were produced: a regulatory-construction flow mapping the Mumbai development approval process (IOD, CC, OC sequences), and a financial flow diagram showing capital movement through the six stages.</p>
+    <p>The cost structure was documented in two comprehensive reference documents covering per-sqft benchmarks for every cost component. Sources included the Council of Architecture (COA), CBRE, Colliers International, DCPR 2034, MahaRERA public data, BMC schedules, and Ready Reckoner rates from IGR Maharashtra.</p>
+  </details>
 </div>
 <hr class="sep">
 <!-- ============================================================ -->
@@ -479,19 +545,29 @@ tr:nth-child(even) td { background: #f8f9fa; }
 <div class="section" id="phase3">
   <h2>06 &middot; Phase 3: Excel Financial Engine Build</h2>
   <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">February 18 &ndash; March 5, 2026</p>
-  <p>This phase translated the architecture into a working financial model. Development moved fast: the core model went from blank spreadsheet to a 9-sheet, 358-formula execution risk framework in under 48 hours.</p>
-  <h3>Preliminary Financial Model (Feb 24)</h3>
-  <p>A 3-sheet prototype establishing baseline parameters: 250,000 sqft BUA, 180,000 sqft saleable area, project cost of 400 Cr, 12% cost of debt, 20% cost of equity. This validated that the cost-phasing logic worked before building the full stage-gated model.</p>
-  <h3>Base Model v1 (Feb 25, 00:00)</h3>
-  <p>Built overnight. Eight sheets implementing the complete stage-gate structure with a 60-month timeline. Each stage sheet tracked: opening capital position, stage-specific costs, equity/debt consumption, and closing position carried forward. A Dashboard sheet introduced the execution-risk scoring framework with per-stage success scores, ratings, and weights. An annotated reference copy was preserved with documentation columns marking INPUT vs LINK fields.</p>
-  <h3>Execution Risk Model V1/V2 (Feb 25)</h3>
-  <p>Expanded to 9 sheets by adding a centralized Project Setup sheet and a dedicated Cash Flow waterfall sheet. The V2 Reference Guide documented the full architecture: 358 formulas, 33 scored risk metrics, dynamic inter-stage capital chain with shortfall detection.</p>
-  <h3>Market Dataset Compilation (Mar 1-10)</h3>
-  <p>Created Mumbai_RE_Project_Dataset.xlsx with 8 sheets of structured market intelligence: 54 projects (26 attributes each) from MahaRERA/Knight Frank/Anarock/CBRE/JLL, area-wise benchmarks for 9 zones, cost component benchmarks, delay analysis (27 cause categories), timeline benchmarks by project type, Ready Reckoner rates FY 2025-26, and market statistics from 2019-2024.</p>
+  <p>Translated the architecture into a working Excel financial model &mdash; blank spreadsheet to 9-sheet, 358-formula execution-risk framework in under 48 hours, followed by a parallel market-dataset compilation.</p>
+  <table>
+    <tr><th>Milestone</th><th>Date</th><th>Key outcome</th></tr>
+    <tr><td>Preliminary Model (3 sheets)</td><td>Feb 24</td><td>Baseline parameters validated (250k sqft BUA, 400 Cr project)</td></tr>
+    <tr><td>Base Model v1 (8 sheets)</td><td>Feb 25</td><td>Full stage-gate structure, 60-month timeline, execution-risk scoring</td></tr>
+    <tr><td>Execution Risk V1/V2 (9 sheets, 358 formulas)</td><td>Feb 25</td><td>Centralised Project Setup + Cash Flow waterfall</td></tr>
+    <tr><td>Mumbai RE Dataset</td><td>Mar 1-10</td><td>54 projects &times; 26 attributes, 9-zone benchmarks, 27 delay categories</td></tr>
+  </table>
   <div class="chart-container">
     <h4>Excel Model Evolution: Sheet Count &amp; Formula Complexity</h4>
     <canvas id="excelChart" height="100"></canvas>
   </div>
+  <details>
+    <summary>Model iterations &amp; dataset compilation</summary>
+    <h4>Preliminary Financial Model (Feb 24)</h4>
+    <p>A 3-sheet prototype establishing baseline parameters: 250,000 sqft BUA, 180,000 sqft saleable area, project cost of 400 Cr, 12% cost of debt, 20% cost of equity. This validated that the cost-phasing logic worked before building the full stage-gated model.</p>
+    <h4>Base Model v1 (Feb 25, 00:00)</h4>
+    <p>Built overnight. Eight sheets implementing the complete stage-gate structure with a 60-month timeline. Each stage sheet tracked: opening capital position, stage-specific costs, equity/debt consumption, and closing position carried forward. A Dashboard sheet introduced the execution-risk scoring framework with per-stage success scores, ratings, and weights. An annotated reference copy was preserved with documentation columns marking INPUT vs LINK fields.</p>
+    <h4>Execution Risk Model V1/V2 (Feb 25)</h4>
+    <p>Expanded to 9 sheets by adding a centralized Project Setup sheet and a dedicated Cash Flow waterfall sheet. The V2 Reference Guide documented the full architecture: 358 formulas, 33 scored risk metrics, dynamic inter-stage capital chain with shortfall detection.</p>
+    <h4>Market Dataset Compilation (Mar 1-10)</h4>
+    <p>Created Mumbai_RE_Project_Dataset.xlsx with 8 sheets of structured market intelligence: 54 projects (26 attributes each) from MahaRERA/Knight Frank/Anarock/CBRE/JLL, area-wise benchmarks for 9 zones, cost component benchmarks, delay analysis (27 cause categories), timeline benchmarks by project type, Ready Reckoner rates FY 2025-26, and market statistics from 2019-2024.</p>
+  </details>
 </div>
 <hr class="sep">
 <!-- ============================================================ -->
@@ -500,17 +576,26 @@ tr:nth-child(even) td { background: #f8f9fa; }
 <div class="section page-break" id="phase4">
   <h2>07 &middot; Phase 4: The Pivot to Interactive Dashboard</h2>
   <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">March 3 &ndash; March 18, 2026</p>
-  <p>This was the pivotal phase where the project shifted from a static Excel model to a dynamic browser-based dashboard. The decision was driven by a simple realization: stakeholder presentations required "what-if" analysis in real time, and Excel could not deliver the interactivity needed.</p>
+  <p>Pivotal phase: shifted from a static Excel model to a browser-based interactive dashboard so stakeholder presentations could run what-if analysis in real time.</p>
+  <table>
+    <tr><th>Version / Milestone</th><th>Date</th><th>Lines</th><th>Key change</th></tr>
+    <tr><td>V3: First HTML Dashboard</td><td>Mar 5</td><td>690</td><td>Financial model validated running client-side</td></tr>
+    <tr><td>V4: Zone Selection + FSI Calculator</td><td>Mar 13</td><td>900</td><td>9-zone selector, FSI panel, Gantt, tornado</td></tr>
+    <tr><td>FSI/DR/TDR Research</td><td>Mar 14-18</td><td>&mdash;</td><td>Industry-consulted acquisition framework (fed V5.3)</td></tr>
+  </table>
   <div class="info-box">
     <div class="ib-title">Why the Platform Pivot?</div>
     <p>An interactive dashboard offers real-time recalculation on parameter changes, instant zone switching, visual feedback through charts and maps, and zero-dependency distribution (any browser, any OS). For a risk model that needs scenario exploration, the browser platform was clearly superior to a spreadsheet.</p>
   </div>
-  <h3>V3: First HTML Dashboard (Mar 5, 690 lines)</h3>
-  <p>Proof of concept. Single-file HTML/CSS/JS with Chart.js v4.5.1. Basic KPI cards, 6-stage cost breakdown in a card grid, interactive scenario panel with a recalculate button, and 5 Chart.js visualizations. The key validation: the entire financial model ran correctly in the browser, matching Excel outputs.</p>
-  <h3>V4: Zone Selection and FSI Calculator (Mar 13, 900 lines)</h3>
-  <p>First major feature expansion. Added a zone selector with 9 interactive cards, FSI calculator panel, alert banners for shortfall warnings, Gantt-style timeline visualization, health scoring table with status badges, and sensitivity tornado chart. Chart.js settled on v4.4.1 which remained through all subsequent versions.</p>
-  <h3>FSI/DR/TDR Research (Mar 14-18)</h3>
-  <p>Created the FSI/DR/TDR Purchase Analysis document after consulting with industry professionals. This research directly informed the DR strategy module added in V5.3. It covered development rights acquisition frameworks, TDR market rates by locality, BMC premium payment scheduling, and four acquisition strategies.</p>
+  <details>
+    <summary>V3, V4 &amp; FSI/DR/TDR research</summary>
+    <h4>V3: First HTML Dashboard (Mar 5, 690 lines)</h4>
+    <p>Proof of concept. Single-file HTML/CSS/JS with Chart.js v4.5.1. Basic KPI cards, 6-stage cost breakdown in a card grid, interactive scenario panel with a recalculate button, and 5 Chart.js visualizations. The key validation: the entire financial model ran correctly in the browser, matching Excel outputs.</p>
+    <h4>V4: Zone Selection and FSI Calculator (Mar 13, 900 lines)</h4>
+    <p>First major feature expansion. Added a zone selector with 9 interactive cards, FSI calculator panel, alert banners for shortfall warnings, Gantt-style timeline visualization, health scoring table with status badges, and sensitivity tornado chart. Chart.js settled on v4.4.1 which remained through all subsequent versions.</p>
+    <h4>FSI/DR/TDR Research (Mar 14-18)</h4>
+    <p>Created the FSI/DR/TDR Purchase Analysis document after consulting with industry professionals. This research directly informed the DR strategy module added in V5.3. It covered development rights acquisition frameworks, TDR market rates by locality, BMC premium payment scheduling, and four acquisition strategies.</p>
+  </details>
 </div>
 <hr class="sep">
 <!-- ============================================================ -->
@@ -519,27 +604,39 @@ tr:nth-child(even) td { background: #f8f9fa; }
 <div class="section page-break" id="phase5">
   <h2>08 &middot; Phase 5: Digital Twin Rapid Build Sprint</h2>
   <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">March 18 &ndash; March 22, 2026 (5 days, 7 version increments)</p>
-  <p>The most intense development period of the project. The codebase grew from 900 lines (V4) to 2,192 lines (V5.5), and the product was rebranded from "Execution Risk Model" to "Digital Twin." Seven version increments shipped in five days.</p>
+  <p>Most intense development period of the project: codebase grew from 900 lines (V4) to 2,192 (V5.5), product rebranded from &ldquo;Execution Risk Model&rdquo; to &ldquo;Digital Twin,&rdquo; six HTML versions shipped in five days.</p>
+  <table>
+    <tr><th>Version</th><th>Date</th><th>Lines</th><th>Key change</th></tr>
+    <tr><td>V5.0</td><td>Mar 18</td><td>2,013</td><td>Rearchitecture: tab navigation, stage pages, Digital Twin rebrand</td></tr>
+    <tr><td>V5.1</td><td>Mar 18</td><td>1,273</td><td>Dead code removal; dark mode framework; sticky header; mini Gantt</td></tr>
+    <tr><td>V5.2</td><td>Mar 18</td><td>1,449</td><td>Dark mode in baseline CSS; stage-header refinement</td></tr>
+    <tr><td>V5.3</td><td>Mar 18-22</td><td>1,825</td><td>Interactive SVG zone map; DR strategy module with 4 BMC schemes</td></tr>
+    <tr><td>V5.4</td><td>Mar 22</td><td>2,192</td><td>Full dark mode (62+ overrides); CC staging; project-type panels</td></tr>
+    <tr><td>V5.5</td><td>Mar 22</td><td>2,192</td><td>Stabilization after broken build recovery</td></tr>
+  </table>
   <div class="chart-container">
     <h4>Sprint Velocity: Daily Line Count During Phase 5</h4>
     <canvas id="sprintChart" height="90"></canvas>
   </div>
-  <h3>V5.0: The Digital Twin Architecture (Mar 18, 2,013 lines)</h3>
-  <p>Complete rearchitecture. Replaced single-page layout with tab-based navigation, stage-specific detail pages, and redesigned header.</p>
-  <h3>V5.1: Refactor and Stabilize (Mar 18, 1,273 lines)</h3>
-  <p>Line count decreased as dead code was removed. Navigation tabs fully implemented with smooth fadeIn animations. Dark mode CSS framework established. Sticky header, stage-colored tab underlines, mini Gantt visualization.</p>
-  <h3>V5.2: Dark Mode Foundation (Mar 18, 1,449 lines)</h3>
-  <p>Comprehensive dark-mode support baked into baseline CSS, stage-header styling refinement, Gantt visualization improvements.</p>
-  <h3>V5.3: Interactive Map and DR Strategy (Mar 18-22, 1,825 lines)</h3>
-  <p>Two major features: interactive SVG map of Mumbai's zones with hover states and active selection, and the Development Rights strategy module with four BMC financing schemes and BMC/TDR split optimization.</p>
-  <h3>V5.4: Full Dark Mode + CC Strategy (Mar 22, 2,192 lines)</h3>
-  <p>Complete dark mode (62+ overrides), CC staging strategy (Phased/Accelerated/Minimal), shortfall pulse animations, DR slider panel, input field differentiation, Greenfield/Redevelopment/SRA project type panels.</p>
-  <h3>V5.5: Broken Build and Recovery (Mar 22, 2,192 lines)</h3>
-  <p>V5.5 broke during development. A backup was preserved in the unstable folder. After fixing, V5.5 was stabilized at the same line count as V5.4.</p>
-  <div class="info-box danger">
-    <div class="ib-title">Excel V5.0: A Failed Experiment</div>
-    <p>The Excel V5.0 attempted a 10-phase granular breakdown instead of 6 stages. This was <strong>rejected after testing</strong> because the finer granularity did not produce better insight and was less intuitive for stakeholders. V5.1 immediately reverted. Not every refactor is an improvement.</p>
-  </div>
+  <details>
+    <summary>V5.0&ndash;V5.5 version-by-version</summary>
+    <h4>V5.0: The Digital Twin Architecture (Mar 18, 2,013 lines)</h4>
+    <p>Complete rearchitecture. Replaced single-page layout with tab-based navigation, stage-specific detail pages, and redesigned header.</p>
+    <h4>V5.1: Refactor and Stabilize (Mar 18, 1,273 lines)</h4>
+    <p>Line count decreased as dead code was removed. Navigation tabs fully implemented with smooth fadeIn animations. Dark mode CSS framework established. Sticky header, stage-colored tab underlines, mini Gantt visualization.</p>
+    <h4>V5.2: Dark Mode Foundation (Mar 18, 1,449 lines)</h4>
+    <p>Comprehensive dark-mode support baked into baseline CSS, stage-header styling refinement, Gantt visualization improvements.</p>
+    <h4>V5.3: Interactive Map and DR Strategy (Mar 18-22, 1,825 lines)</h4>
+    <p>Two major features: interactive SVG map of Mumbai&rsquo;s zones with hover states and active selection, and the Development Rights strategy module with four BMC financing schemes and BMC/TDR split optimization.</p>
+    <h4>V5.4: Full Dark Mode + CC Strategy (Mar 22, 2,192 lines)</h4>
+    <p>Complete dark mode (62+ overrides), CC staging strategy (Phased/Accelerated/Minimal), shortfall pulse animations, DR slider panel, input field differentiation, Greenfield/Redevelopment/SRA project type panels.</p>
+    <h4>V5.5: Broken Build and Recovery (Mar 22, 2,192 lines)</h4>
+    <p>V5.5 broke during development. A backup was preserved in the unstable folder. After fixing, V5.5 was stabilized at the same line count as V5.4.</p>
+    <div class="info-box danger">
+      <div class="ib-title">Excel V5.0: A Failed Experiment</div>
+      <p>The Excel V5.0 attempted a 10-phase granular breakdown instead of 6 stages. This was <strong>rejected after testing</strong> because the finer granularity did not produce better insight and was less intuitive for stakeholders. V5.1 immediately reverted. Not every refactor is an improvement.</p>
+    </div>
+  </details>
 </div>
 <hr class="sep">
 <!-- ============================================================ -->
@@ -548,16 +645,26 @@ tr:nth-child(even) td { background: #f8f9fa; }
 <div class="section page-break" id="phase6">
   <h2>09 &middot; Phase 6: Stabilization &amp; Packaging</h2>
   <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">March 23 &ndash; March 31, 2026</p>
-  <h3>V5.6: Release Candidate (Mar 23-24, 2,557 lines)</h3>
-  <p>Refinement over new features: polished shortfall KPI animations, expanded Gantt visualization, fine-tuned interactive map and DR scheme handling. A USD variant was created for international investor presentations.</p>
-  <h3>Electron Desktop Application (Mar 24)</h3>
-  <p>Packaged V5.6 as a native macOS application using Electron v31 and electron-builder v24.13.3. Window configuration: 1400x900 default (minimum 1024x700), macOS hidden-inset title bar, maximized on launch. Security: context isolation enabled, preload script sandboxing.</p>
-  <h3>Node.js Backend API (Mar 24)</h3>
-  <p>Built an Express.js server with SQLite persistence on port 3562. Provides API endpoints for zones, cost parameters, FSI lookup tables, stage definitions, BMC schemes, and project save/load with API key authentication. The dashboard detects API availability at startup and falls back seamlessly to hardcoded data arrays.</p>
+  <p>Release candidate and desktop packaging: shipped V5.6 as the first stable build, then wrapped it as a native macOS Electron application with an optional backend API.</p>
+  <table>
+    <tr><th>Version / Milestone</th><th>Date</th><th>Lines</th><th>Key change</th></tr>
+    <tr><td>V5.6: Release Candidate</td><td>Mar 23-24</td><td>2,557</td><td>Polish release: KPI animations, Gantt, map tuning; USD variant</td></tr>
+    <tr><td>Electron Desktop App</td><td>Mar 24</td><td>&mdash;</td><td>macOS DMG, Electron v31, context-isolated preload</td></tr>
+    <tr><td>Node.js Backend API</td><td>Mar 24</td><td>&mdash;</td><td>Express + SQLite; offline fallback to hardcoded data</td></tr>
+  </table>
   <div class="info-box">
     <div class="ib-title">Offline-First Architecture</div>
     <p>The dashboard detects API availability at startup. If the backend is unreachable, it falls back seamlessly to hardcoded data arrays. This means the tool always works: on an airplane with just the HTML file, from a USB drive, or connected to a shared team server.</p>
   </div>
+  <details>
+    <summary>V5.6 release, Electron packaging &amp; backend API</summary>
+    <h4>V5.6: Release Candidate (Mar 23-24, 2,557 lines)</h4>
+    <p>Refinement over new features: polished shortfall KPI animations, expanded Gantt visualization, fine-tuned interactive map and DR scheme handling. A USD variant was created for international investor presentations.</p>
+    <h4>Electron Desktop Application (Mar 24)</h4>
+    <p>Packaged V5.6 as a native macOS application using Electron v31 and electron-builder v24.13.3. Window configuration: 1400x900 default (minimum 1024x700), macOS hidden-inset title bar, maximized on launch. Security: context isolation enabled, preload script sandboxing.</p>
+    <h4>Node.js Backend API (Mar 24)</h4>
+    <p>Built an Express.js server with SQLite persistence on port 3562. Provides API endpoints for zones, cost parameters, FSI lookup tables, stage definitions, BMC schemes, and project save/load with API key authentication.</p>
+  </details>
 </div>
 <hr class="sep">
 <!-- ============================================================ -->
@@ -566,24 +673,34 @@ tr:nth-child(even) td { background: #f8f9fa; }
 <div class="section page-break" id="phase7">
   <h2>10 &middot; Phase 7: Calibration &amp; Code Cleanup</h2>
   <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">March 31 &ndash; April 3, 2026</p>
-  <h3>V5.6.1: FSI Calibration (Mar 31, 2,559 lines)</h3>
-  <p>Applied two targeted fixes to the FSI computation engine: base FSI override to 1.35 for Redevelopment/SRA projects (DCPR 2034 Regulation 33(7)(B) interpretation), and zone round-trip consistency fix aligning sample defaults with formula output.</p>
-  <div class="info-box warn">
-    <div class="ib-title">Base FSI Override for Redevelopment</div>
-    <p>Changed base FSI for Redevelopment and SRA projects from the road-width table value to a fixed <strong>1.35</strong>. This affects both computeFSIFromRoad() and the incentive calibration logic.</p>
-  </div>
-  <h3>Automated Test Suite (574 Checks)</h3>
-  <p>Comprehensive test suite using Node.js + jsdom covering: 9 zones &times; 3 project types &times; all road width brackets &times; all 4 BMC financing schemes &times; edge cases.</p>
+  <p>Calibration pass on the FSI computation engine plus an automated regression suite: two targeted fixes in V5.6.1, 574-check test harness, and a dead-code cleanup release in V5.6.2.</p>
+  <table>
+    <tr><th>Version / Milestone</th><th>Date</th><th>Lines</th><th>Key change</th></tr>
+    <tr><td>V5.6.1: FSI Calibration</td><td>Mar 31</td><td>2,559</td><td>Base FSI override for Redev/SRA (DCPR 2034 §33(7)(B)); zone round-trip fix</td></tr>
+    <tr><td>Automated Test Suite</td><td>Mar 31</td><td>&mdash;</td><td>574 checks &mdash; 574 passed, 0 failed, 1 expected warning</td></tr>
+    <tr><td>V5.6.2: Code Cleanup</td><td>Apr 3</td><td>2,559</td><td>Dead code removal; zero functional changes</td></tr>
+  </table>
   <div class="chart-container">
     <h4>Test Coverage Distribution by Category</h4>
     <canvas id="testChart" height="100"></canvas>
   </div>
   <div class="info-box success">
     <div class="ib-title">Test Results: 574 Passed, 0 Failed, 1 Warning</div>
-    <p>The single warning was Zone 8 (Extended Western Suburbs) Redevelopment showing a -110% margin, which is <em>expected</em> behavior: low ASP (18,000/sqft) with high rehabilitation costs makes redevelopment economically unviable in that zone.</p>
+    <p>The single warning was Zone 8 (Extended Western Suburbs) Redevelopment showing a -110% margin, which is <em>expected</em> behavior: low ASP with high rehabilitation costs makes redevelopment economically unviable in that zone.</p>
   </div>
-  <h3>V5.6.2: Code Cleanup (Apr 3, 2,559 lines)</h3>
-  <p>Pure code quality release with zero functional changes. Fixed duplicate BMC_SCHEMES definition, removed unused parameters, resolved double event listener on DR slider. Post-cleanup: 149 assertions, 100% pass rate.</p>
+  <details>
+    <summary>V5.6.1 calibration, test suite &amp; V5.6.2 cleanup</summary>
+    <h4>V5.6.1: FSI Calibration (Mar 31, 2,559 lines)</h4>
+    <p>Applied two targeted fixes to the FSI computation engine: base FSI override to 1.35 for Redevelopment/SRA projects (DCPR 2034 Regulation 33(7)(B) interpretation), and zone round-trip consistency fix aligning sample defaults with formula output.</p>
+    <div class="info-box warn">
+      <div class="ib-title">Base FSI Override for Redevelopment</div>
+      <p>Base FSI for Redevelopment and SRA projects moved from the road-width table value to a fixed <strong>1.35</strong>, aligned with DCPR 2034 §33(7)(B).</p>
+    </div>
+    <h4>Automated Test Suite (574 Checks)</h4>
+    <p>Comprehensive test suite using Node.js + jsdom covering: 9 zones &times; 3 project types &times; all road width brackets &times; all 4 BMC financing schemes &times; edge cases.</p>
+    <h4>V5.6.2: Code Cleanup (Apr 3, 2,559 lines)</h4>
+    <p>Pure code quality release with zero functional changes. Fixed duplicate BMC_SCHEMES definition, removed unused parameters, resolved double event listener on DR slider. Post-cleanup: 149 assertions, 100% pass rate.</p>
+  </details>
 </div>
 <hr class="sep">
 <!-- ============================================================ -->
@@ -591,51 +708,177 @@ tr:nth-child(even) td { background: #f8f9fa; }
 <!-- ============================================================ -->
 <div class="section page-break" id="phase8">
   <h2>11 &middot; Phase 8: Compare Mode &amp; Twin Engine</h2>
-  <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">April 3 &ndash; Present (Active Development)</p>
-  <p>This phase introduced the most architecturally significant feature since the platform pivot: fully independent side-by-side scenario comparison. The "Twin" in Digital Twin became literal &mdash; users can now run two complete, independent sessions simultaneously and compare execution risk across different zone/parameter configurations in real time.</p>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">April 3 &ndash; April 6, 2026</p>
+  <p>Most architecturally significant feature since the platform pivot: fully independent side-by-side scenario comparison. The &ldquo;Twin&rdquo; in Digital Twin became literal &mdash; two complete independent sessions running simultaneously, with live score gauges synchronised across both.</p>
+  <table>
+    <tr><th>Version / Milestone</th><th>Date</th><th>Lines</th><th>Key change</th></tr>
+    <tr><td>V5.6.3: Compare Mode Foundation</td><td>Apr 3</td><td>~2,700</td><td>Dual-session overlay, isolated contexts, dark-mode sync</td></tr>
+    <tr><td>V5.7: Enhanced Compare UI</td><td>Apr 3</td><td>~2,760</td><td>Branded TESSERACT TWIN header, session accent lines</td></tr>
+    <tr><td>V5.7.1: Session Persistence</td><td>Apr 3</td><td>~2,800</td><td>Persistent sessions; active-&rarr;right-pane routing</td></tr>
+    <tr><td>V5.7.2: Score Gauges &amp; Nav Fix</td><td>Apr 4</td><td>~2,840</td><td>Real-time score gauges in compare header; postMessage IPC</td></tr>
+    <tr><td>Branding Assets</td><td>Apr 3</td><td>&mdash;</td><td>7 PNGs: logo, lockups, tagline variants</td></tr>
+  </table>
   <div class="info-box cyan">
-    <div class="ib-title">Architecture Decision: Iframe Isolation</div>
-    <p>The core challenge was that TESSERACT's financial engine uses ~30+ global variables (selectedZone, charts, lastCalc, fsiPieChartInstance, etc.) tightly coupled through <code>recalculate()</code>. Refactoring all of this for multi-instance support would have required rewriting ~2,500 lines. Instead, each compare session runs in its own <code>&lt;iframe&gt;</code>, providing complete state isolation at zero refactoring cost. Communication between parent and iframes uses the <code>postMessage</code> API.</p>
+    <div class="ib-title">Architecture Decision: Isolated Compare Contexts</div>
+    <p>The financial engine carries extensively shared global state that is tightly coupled through the main recalculation path. Refactoring for multi-instance support would have required a major rewrite. Instead, each compare session runs in its own isolated context, giving complete state isolation without touching the core engine. Cross-context communication uses the browser&rsquo;s standard message-passing API.</p>
   </div>
-  <h3>V5.6.3: Compare Mode Foundation (Apr 3, ~2,700 lines)</h3>
-  <p>First implementation of dual-session Compare Mode. Added a Compare button in the header, full-screen overlay with two iframe panes (Session A and Session B), each running an independent instance of the dashboard via <code>?embedded=1&session=A|B</code> query parameters. Embedded mode hides the header and user profile tab inside iframes, adds session accent bars (blue for A, green for B), and syncs dark mode via postMessage.</p>
-  <h3>V5.7: Enhanced Compare UI (Apr 3, ~2,760 lines)</h3>
-  <p>Major UI refinement for compare mode. Added a branded TESSERACT TWIN header to the compare overlay with the SVG logo, consistent typography, and a single user profile mini-avatar. Universal dark mode toggle in the compare header syncs to both iframes simultaneously. Session labels with color-coded accent lines (Session A: blue, Session B: green) for instant visual differentiation.</p>
-  <h3>V5.7.1: Session Persistence &amp; Polish (Apr 3, ~2,800 lines)</h3>
-  <p>Four targeted fixes in a single version:</p>
-  <table>
-    <tr><th>#</th><th>Issue</th><th>Fix</th></tr>
-    <tr><td>1</td><td>Current active session not carried into compare</td><td>Active session loads in right pane (B), fresh session in left pane (A)</td></tr>
-    <tr><td>2</td><td>Sessions reset when navigating to user profile and back</td><td>Introduced <code>compareInitialized</code> flag; iframes persist, overlay shows/hides without destruction</td></tr>
-    <tr><td>3</td><td>User profile didn't show compare session info</td><td>Added <code>compareSessionInfo</code> div with dual session cards (blue A, green B)</td></tr>
-    <tr><td>4</td><td>Redundant dark mode toggle in header</td><td>Removed the small header toggle; dark mode now exclusively via User Settings</td></tr>
-  </table>
-  <h3>V5.7.2: Score Gauges &amp; Navigation Fix (Apr 4, ~2,840 lines)</h3>
-  <p>Added real-time composite score gauges in the compare header &mdash; each session displays its overall risk score with color-coded circular indicators and rating labels. Scores update live as users modify parameters in either iframe.</p>
-  <div class="info-box warn">
-    <div class="ib-title">postMessage vs contentDocument</div>
-    <p>The initial implementation polled iframe DOMs via <code>contentDocument</code> to read scores. This works on <code>http://</code> but <strong>browsers block cross-origin DOM access on <code>file://</code></strong> protocol for security. Fix: switched to <code>postMessage</code> &mdash; each iframe's <code>updateCompositeGauge()</code> posts <code>{type:'scoreUpdate', session, score, color, rating}</code> to the parent, and the parent listens for these messages. This works universally regardless of protocol.</p>
-  </div>
-  <p>Also added "Sample" test buttons per session in the compare header, and fixed navigation so clicking "Overview" while compare sessions are running re-opens the compare overlay instead of navigating to the regular overview page. Added <code>compareClosingIntentional</code> flag to prevent the exit button from getting trapped in a reopen loop.</p>
-  <h3>Branding &amp; Marketing Assets (Apr 3)</h3>
-  <p>Created 7 PNG branding assets using the exact TESSERACT TWIN logo, fonts, and colors from the software:</p>
-  <table>
-    <tr><th>Asset</th><th>Description</th></tr>
-    <tr><td>tesseract_logo_master.png</td><td>Logo on dark gradient background</td></tr>
-    <tr><td>tesseract_logo_transparent.png</td><td>Logo on transparent background</td></tr>
-    <tr><td>tesseract_text_only.png</td><td>"TESSERACT BETA" wordmark</td></tr>
-    <tr><td>tesseract_logo_text.png</td><td>Horizontal lockup (logo + text)</td></tr>
-    <tr><td>tesseract_text_tagline.png</td><td>Text + "See what others can't" tagline</td></tr>
-    <tr><td>tesseract_full_lockup.png</td><td>Full lockup: logo + text + tagline + subtitle</td></tr>
-    <tr><td>tesseract_brand_analytics.png</td><td>Navy background, thicker logo, "Real Estate Analytics and Intelligence"</td></tr>
-  </table>
+  <details>
+    <summary>V5.6.3 &rarr; V5.7.2 compare-mode evolution &amp; branding</summary>
+    <h4>V5.6.3: Compare Mode Foundation (Apr 3, ~2,700 lines)</h4>
+    <p>First implementation of dual-session Compare Mode. Added a Compare button in the header, full-screen overlay with two panes (Session A, Session B), each running an independent instance of the dashboard. Embedded mode hides the header and user profile tab, adds session accent bars (blue for A, green for B), and syncs dark mode across both.</p>
+    <h4>V5.7: Enhanced Compare UI (Apr 3, ~2,760 lines)</h4>
+    <p>Major UI refinement: branded TESSERACT TWIN header with SVG logo, a single user profile mini-avatar, universal dark-mode toggle that syncs to both sessions, and color-coded accent lines for instant visual differentiation.</p>
+    <h4>V5.7.1: Session Persistence &amp; Polish (Apr 3, ~2,800 lines)</h4>
+    <p>Four targeted fixes:</p>
+    <table>
+      <tr><th>#</th><th>Issue</th><th>Fix</th></tr>
+      <tr><td>1</td><td>Current active session not carried into compare</td><td>Active session loads in right pane (B), fresh session in left pane (A)</td></tr>
+      <tr><td>2</td><td>Sessions reset when navigating to user profile and back</td><td>Compare state persists across overlay show/hide; sessions are not destroyed on close</td></tr>
+      <tr><td>3</td><td>User profile didn&rsquo;t show compare session info</td><td>Added dual-session info cards (blue A, green B)</td></tr>
+      <tr><td>4</td><td>Redundant dark mode toggle in header</td><td>Removed the small header toggle; dark mode now exclusively via User Settings</td></tr>
+    </table>
+    <h4>V5.7.2: Score Gauges &amp; Navigation Fix (Apr 4, ~2,840 lines)</h4>
+    <p>Added real-time composite score gauges in the compare header &mdash; each session displays its overall risk score with color-coded circular indicators and rating labels. Scores update live as users modify parameters in either session.</p>
+    <div class="info-box warn">
+      <div class="ib-title">Cross-Context Score Sync</div>
+      <p>The initial implementation polled child DOMs directly, which worked when served over HTTP but <strong>browsers block cross-origin DOM access on the <code>file://</code> protocol</strong>. Fixed by switching to <code>postMessage</code>: each session posts its updated score to the parent, which listens for the message and updates the gauge. Works universally regardless of protocol.</p>
+    </div>
+    <p>Also added per-session &ldquo;Sample&rdquo; test buttons in the compare header, and fixed navigation so clicking &ldquo;Overview&rdquo; while compare sessions are running re-opens the compare overlay instead of navigating away.</p>
+    <h4>Branding &amp; Marketing Assets (Apr 3)</h4>
+    <p>Seven PNG branding assets using the TESSERACT TWIN logo, fonts, and colors:</p>
+    <table>
+      <tr><th>Asset</th><th>Description</th></tr>
+      <tr><td>tesseract_logo_master.png</td><td>Logo on dark gradient background</td></tr>
+      <tr><td>tesseract_logo_transparent.png</td><td>Logo on transparent background</td></tr>
+      <tr><td>tesseract_text_only.png</td><td>&ldquo;TESSERACT BETA&rdquo; wordmark</td></tr>
+      <tr><td>tesseract_logo_text.png</td><td>Horizontal lockup (logo + text)</td></tr>
+      <tr><td>tesseract_text_tagline.png</td><td>Text + &ldquo;See what others can&rsquo;t&rdquo; tagline</td></tr>
+      <tr><td>tesseract_full_lockup.png</td><td>Full lockup: logo + text + tagline + subtitle</td></tr>
+      <tr><td>tesseract_brand_analytics.png</td><td>Navy background, thicker logo, &ldquo;Real Estate Analytics and Intelligence&rdquo;</td></tr>
+    </table>
+  </details>
 </div>
 <hr class="sep">
 <!-- ============================================================ -->
-<!-- 12. DETAILED VERSION CHANGELOG -->
+<!-- 12. PHASE 9 -->
+<!-- ============================================================ -->
+<div class="section page-break" id="phase9">
+  <h2>12 &middot; Phase 9: Audit &amp; Financial-Logic Hardening</h2>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">April 6 &ndash; April 21, 2026 (Completed)</p>
+  <p>Structured audit-then-fix pass on the financial engine against Mumbai RE conventions. Shipped V5.7.3 in place and V5.8 as a new file, with an analytics PDF export added to V5.8 on Apr 21.</p>
+  <table>
+    <tr><th>Version / Milestone</th><th>Date</th><th>Lines</th><th>Key change</th></tr>
+    <tr><td>Compare-close fix + Propagation audit</td><td>Apr 6-8</td><td>&mdash;</td><td>Sticky close flag; 50-input perturbation confirmed engine wiring</td></tr>
+    <tr><td>Code-read audit of financial engine</td><td>Apr 9-14</td><td>&mdash;</td><td>Line-by-line read against Stamp Act &sect;5, DCPR 2034, RERA, RR</td></tr>
+    <tr><td>Field cross-check &amp; catalogue</td><td>Apr 15-18</td><td>&mdash;</td><td>10-finding catalogue stabilised (4 H, 6 M); UX items split out</td></tr>
+    <tr><td>V5.7.3</td><td>Apr 19</td><td>2,973</td><td>6 surgical refinements in-place to V5.7.2 + new Cash-Flow IRR KPI</td></tr>
+    <tr><td>V5.8</td><td>Apr 20&ndash;21</td><td>3,286</td><td>5 more refinements + per-stage soft costs + calendar-axis cash-flow rebuild + analytics PDF export</td></tr>
+  </table>
+  <div class="info-box cyan">
+    <div class="ib-title">Two Audit Techniques, Complementary Coverage</div>
+    <p>Two complementary methods: a <strong>black-box propagation audit</strong> (Apr 8, 50-input perturbation with DOM diff) confirmed every canonical input flows through the engine; a <strong>code-read audit</strong> (Apr 9&ndash;19, line-by-line against Maharashtra Stamp Act &sect;5, RERA, DCPR 2034, and Ready Reckoner conventions) validated the logic against statute and market convention. Combined catalogue graded High / Medium / Low.</p>
+  </div>
+  <button type="button" class="details-toggle no-print" data-details-toggle="phase9" aria-pressed="false">&#9656; Expand all details</button>
+  <details>
+    <summary>Audit narrative &amp; context</summary>
+    <p>With Compare Mode stable, attention shifted from feature expansion to engine correctness. Field-testing against Webtech Realty&rsquo;s deal pipeline flagged a handful of areas where the engine&rsquo;s output diverged from experienced-developer expectations on Mumbai RE conventions. Rather than patch each symptom, Phase 9 was run as a structured audit-then-fix pass over two weeks.</p>
+    <p>The phase opened (Apr 6&ndash;8) with a latent Compare Mode fix &mdash; replacing the V5.7.2 single-shot close flag with a sticky version that holds until explicit reopen &mdash; and the propagation audit itself: a 50-input perturbation matrix with recalculation-counter instrumentation that confirmed every canonical input flows through the engine. Apr 9&ndash;14 ran the code-read audit grouped by concern (stage cost and interest loop, stamp duty and regulatory costs, return KPIs, sensitivity tornado), each block checked against its statutory or market reference. Apr 15&ndash;18 cross-validated draft findings against live Webtech Realty deals on the V5.7.2 dashboard, reclassifying rounding-band artefacts as UX rather than engine items and stabilising the catalogue at ten findings (four HIGH, six MEDIUM). Apr 19 batched six refinements into V5.7.3 as an in-place edit to the same canonical filename. Apr 20 shipped V5.8 as a new file with five more refinements, per-stage soft-cost inputs, and the calendar-axis cash-flow rebuild. Apr 21 added a one-click analytics PDF export on the same V5.8 file &mdash; a read-only feature that captures the full analytics page (all five Chart.js figures, the sensitivity tornado, and the cash-flow table) into a branded multi-page PDF, session-aware in Compare Mode.</p>
+    <div class="info-box purple">
+      <div class="ib-title">V5.8 Headline: Calendar-Axis Cash-Flow Rebuild</div>
+      <p>V5.8&rsquo;s most significant structural change. The equity cash-flow generator was rebuilt on a calendar-month axis so concurrent stages (common in phased Redevelopment where S2&harr;S3, S3&harr;S4, and S5&harr;S6 overlaps compress the schedule) share the same calendar slot rather than accumulating serially. The earlier serial-axis treatment silently inflated project length whenever stages overlapped. On overlap-heavy projects the rebuild can shift the reported cash-flow IRR by 200&ndash;400 basis points &mdash; a meaningful difference for leveraged deal screening.</p>
+    </div>
+    <div class="info-box">
+      <div class="ib-title">Audit Output Artifacts</div>
+      <p>Two markdown reports live alongside this log for reproducibility: <code>audit_v572_propagation.md</code> (the Apr 8 black-box audit with the 50-input perturbation matrix) and <code>MASTER_PROMPT_V572_SESSION3.md</code> (the Apr 19 code-read audit with the ten-finding catalogue and approved edit plan). Each refinement in V5.7.3 and V5.8 traces back to a specific line-numbered entry in those reports.</p>
+    </div>
+  </details>
+  <details>
+    <summary>V5.7.3 &mdash; six refinements (Apr 19)</summary>
+    <table>
+      <tr><th>Area</th><th>Refinement</th></tr>
+      <tr><td>KPI layout</td><td>Responsive 4-column grid for the headline KPI cards</td></tr>
+      <tr><td>Pre-sale sweep</td><td>Refined to offset drawn debt before interest accrual per standard Mumbai convention</td></tr>
+      <tr><td>Redevelopment stamp duty</td><td>Basis aligned with Maharashtra Stamp Act &sect;5 (Development Agreement consideration)</td></tr>
+      <tr><td>annROE annualisation</td><td>Window refined to reflect the money-out duration including delays</td></tr>
+      <tr><td>Final-stage absorption</td><td>Capped to remaining unsold inventory</td></tr>
+      <tr><td>New KPI: Cash-Flow IRR</td><td>Added alongside annualised ROE to reflect time-value of money</td></tr>
+    </table>
+  </details>
+  <details>
+    <summary>V5.8 &mdash; five refinements plus per-stage soft costs (Apr 20)</summary>
+    <table>
+      <tr><th>Area</th><th>Refinement</th></tr>
+      <tr><td>Sensitivity tornado</td><td>Driver magnitudes calibrated to standard shock bases</td></tr>
+      <tr><td>Return KPIs</td><td>MOIC and annROE aligned to actually-deployed equity</td></tr>
+      <tr><td>Redevelopment stamp duty</td><td>Rehab component basis aligned with Mumbai Ready Reckoner conventions</td></tr>
+      <tr><td>Per-stage soft costs</td><td>New input card (S1&ndash;S6) for liaison, consultants, PMC retainers, auditor fees</td></tr>
+      <tr><td>Cash-flow timeline</td><td>Calendar-month axis rebuild for overlap-aware project timelines</td></tr>
+      <tr><td>Analytics PDF export (Apr 21)</td><td>One-click branded PDF of the analytics page &mdash; cover, all five Chart.js figures, tornado, cash-flow table; session-aware filename in Compare Mode</td></tr>
+    </table>
+  </details>
+</div>
+<hr class="sep">
+<!-- ============================================================ -->
+<!-- 13. PHASE 10 -->
+<!-- ============================================================ -->
+<div class="section page-break" id="phase10">
+  <h2>13 &middot; Phase 10: V6 Development &mdash; Calendar-Axis Completion</h2>
+  <p class="meta">April 20, 2026 &ndash; Present (Active Development)</p>
+  <p>With V5.8 shipped, Phase 10 opens a deliberately narrow V6 branch that extends V5.8&rsquo;s calendar-axis treatment from the equity cash-flow generator into the debt-accrual timeline &mdash; an architectural completion rather than a feature addition.</p>
+  <table>
+    <tr><th>Milestone</th><th>Status</th><th>Focus</th></tr>
+    <tr><td>V6 branch opened</td><td>Apr 20, 2026</td><td>Scope fixed: debt-accrual on a unified monthly time axis</td></tr>
+    <tr><td>Excel reference model</td><td>In progress</td><td>Validate month-by-month logic on a known scenario before porting</td></tr>
+    <tr><td>HTML port &amp; parity test</td><td>Planned</td><td>Zero-overlap parity with V5.8; overlap-aware IRR uplift on Redevelopment</td></tr>
+    <tr><td>V6.x UX pass</td><td>Backlog</td><td>Integer-month snap, debt-facility headroom badge, scenario-gated input dimming</td></tr>
+    <tr><td>Production cut-over</td><td>Gated</td><td>Contingent on regression pass against the Apr 8 propagation audit</td></tr>
+  </table>
+  <button type="button" class="details-toggle no-print" data-details-toggle="phase10" aria-pressed="false">&#9656; Expand all details</button>
+  <details>
+    <summary>Scope &amp; approach</summary>
+    <p>V5.8 completed the equity cash-flow migration to a calendar-month axis. V6 applies the same axis discipline to debt accrual, so interest and equity flows share a single time base. The change is most visible on overlap-heavy phased Redevelopment projects typical of Mumbai, where a unified axis gives a cleaner aggregate; on non-overlap projects, numbers converge with V5.8.</p>
+    <table>
+      <tr><th>Area</th><th>Treatment</th></tr>
+      <tr><td>Equity cash-flow axis</td><td>Carried forward from V5.8 unchanged</td></tr>
+      <tr><td>Debt-accrual axis</td><td>Rebuilt to share the equity calendar axis rather than a stage-loop aggregate</td></tr>
+      <tr><td>Bridge financing</td><td>Indexed on the same calendar axis for consistency</td></tr>
+    </table>
+  </details>
+  <details>
+    <summary>Work plan</summary>
+    <ol>
+      <li><strong>Reference Excel model first.</strong> Validate the month-by-month logic in Excel on a known scenario where each cell is visible before touching the HTML engine.</li>
+      <li><strong>Port to HTML.</strong> Extend the V5.8 cash-flow generator to emit the additional monthly series and wire the result into the existing interest row and IRR input.</li>
+      <li><strong>Parity test.</strong> Zero-overlap projects must match V5.8 exactly; overlap-heavy projects are expected to show a modest IRR uplift and reduced total interest.</li>
+      <li><strong>Regression.</strong> Re-run the 574-check test suite; any KPI dependent on total interest must produce identical numbers on the canonical zero-overlap scenario.</li>
+    </ol>
+  </details>
+  <details>
+    <summary>Parallel UX Track (V6.x)</summary>
+    <p>Two UX items noted during Phase 9 &mdash; integer-month rounding on duration/delay/overlap inputs, and debt-facility headroom absorbing small perturbations &mdash; are planned for a V6.x UX pass after the engine work lands. Candidate affordances: integer snap on rounded inputs, a &ldquo;drawn vs. facility&rdquo; badge on the debt input, and scenario-gated dimming of inputs that are inert under the current project type. Sequenced after the engine work to avoid reworking UI against a shifting baseline.</p>
+  </details>
+  <div class="info-box purple">
+    <div class="ib-title">Exit Criteria for V6</div>
+    <p>V6 is done when (a) the 574-check test suite passes with no KPI delta on zero-overlap projects, (b) overlap-heavy reference projects show the expected IRR uplift and reduced total interest, and (c) an Apr 8 propagation-audit rerun shows no listener-wiring regressions. V6 then replaces V5.8 as the production file; V5.8 is retained as the penultimate rollback target behind V5.7.2.</p>
+  </div>
+</div>
+<hr class="sep">
+<!-- ============================================================ -->
+<!-- 14. DETAILED VERSION CHANGELOG -->
 <!-- ============================================================ -->
 <div class="section page-break" id="versions">
-  <h2>12 &middot; Detailed Version Changelog</h2>
+  <h2>14 &middot; Detailed Version Changelog</h2>
+  <details>
+    <summary>Recent release lineage &mdash; V5.7.2 through V6</summary>
+    <div class="lineage">
+      <span class="lineage-row"><span class="lineage-node">V5.7.2</span><span class="lineage-label">previous stable</span></span>
+      <span class="lineage-arrow">&rarr;</span>
+      <span class="lineage-row"><span class="lineage-node current">V5.8</span><span class="lineage-label">current production</span></span>
+      <span class="lineage-arrow">&rarr;</span>
+      <span class="lineage-row"><span class="lineage-node branch">V6</span><span class="lineage-label">branch in planning</span></span>
+    </div>
+    <p style="color:var(--muted);font-size:12px;margin-top:10px;">V5.7.3 shipped on Apr 19 as an in-place refinement pass and has been absorbed into V5.8&rsquo;s broader rewrite. It remains in the changelog and feature-evolution matrix below as a historical record.</p>
+  </details>
   <h3>Excel Model Track</h3>
   <div class="ver-card excel">
     <div class="ver-header"><span class="ver-name">Preliminary Model</span><span class="ver-meta">Feb 24 &middot; 20 KB &middot; 3 sheets</span></div>
@@ -706,20 +949,20 @@ tr:nth-child(even) td { background: #f8f9fa; }
   </div>
   <div class="ver-card">
     <div class="ver-header"><span class="ver-name">V5.6: Release Candidate</span><span class="ver-meta">Mar 23-24 &middot; 2,557 lines &middot; 246 KB</span></div>
-    <div class="ver-desc">Polish release: refined KPI animations, expanded Gantt, map fine-tuning.</div>
+    <div class="ver-desc">Polish release: refined KPI animations, expanded Gantt, map fine-tuning. Detail in <a href="#phase6">&sect;9 Phase 6</a>.</div>
   </div>
   <div class="ver-card">
     <div class="ver-header"><span class="ver-name">V5.6.1: FSI Calibration</span><span class="ver-meta">Mar 31 &middot; 2,559 lines &middot; 246 KB</span></div>
-    <div class="ver-desc">Base FSI = 1.35 for Redevelopment/SRA, syncFSI fix, zone round-trip fix, 574 tests passed.</div>
+    <div class="ver-desc">Base FSI = 1.35 for Redevelopment/SRA, syncFSI fix, zone round-trip fix, 574 tests passed. Detail in <a href="#phase7">&sect;10 Phase 7</a>.</div>
   </div>
   <div class="ver-card">
     <div class="ver-header"><span class="ver-name">V5.6.2: Code Cleanup</span><span class="ver-meta">Apr 3 &middot; 2,559 lines &middot; 246 KB</span></div>
-    <div class="ver-desc">Dead code removal, duplicate elimination, event listener fix. Zero functional changes.</div>
+    <div class="ver-desc">Dead code removal, duplicate elimination, event listener fix. Zero functional changes. Detail in <a href="#phase7">&sect;10 Phase 7</a>.</div>
   </div>
   <h3>Tesseract Twin Track <span class="tag tag-cyan">New</span></h3>
   <div class="ver-card twin">
     <div class="ver-header"><span class="ver-name">V5.6.3: Compare Mode Foundation</span><span class="ver-meta">Apr 3 &middot; ~2,700 lines &middot; 254 KB</span></div>
-    <div class="ver-desc">Dual-session side-by-side comparison via iframe isolation.</div>
+    <div class="ver-desc">Dual-session side-by-side comparison via iframe isolation. Detail in <a href="#phase8">&sect;11 Phase 8</a>.</div>
     <ul>
       <li>Full-screen compare overlay with Session A (blue) and Session B (green)</li>
       <li>Embedded mode: <code>?embedded=1&session=A|B&dark=0|1</code> query params</li>
@@ -730,7 +973,7 @@ tr:nth-child(even) td { background: #f8f9fa; }
   </div>
   <div class="ver-card twin">
     <div class="ver-header"><span class="ver-name">V5.7: Enhanced Compare UI</span><span class="ver-meta">Apr 3 &middot; ~2,760 lines &middot; 261 KB</span></div>
-    <div class="ver-desc">Branded compare header, single user profile, universal dark mode.</div>
+    <div class="ver-desc">Branded compare header, single user profile, universal dark mode. Detail in <a href="#phase8">&sect;11 Phase 8</a>.</div>
     <ul>
       <li>TESSERACT TWIN branded header with SVG logo in compare overlay</li>
       <li>Single user profile mini-avatar in compare header</li>
@@ -740,7 +983,7 @@ tr:nth-child(even) td { background: #f8f9fa; }
   </div>
   <div class="ver-card twin">
     <div class="ver-header"><span class="ver-name">V5.7.1: Session Persistence</span><span class="ver-meta">Apr 3 &middot; ~2,800 lines &middot; 264 KB</span></div>
-    <div class="ver-desc">Persistent sessions, current&rarr;right pane, dual session info, removed redundant toggle.</div>
+    <div class="ver-desc">Persistent sessions, current&rarr;right pane, dual session info, removed redundant toggle. Detail in <a href="#phase8">&sect;11 Phase 8</a>.</div>
     <ul>
       <li><code>compareInitialized</code> flag prevents session destruction on overlay hide</li>
       <li>Active session carried to right pane (B), fresh session on left (A)</li>
@@ -748,15 +991,24 @@ tr:nth-child(even) td { background: #f8f9fa; }
       <li>Per-session "Sample" test buttons in compare header via postMessage</li>
     </ul>
   </div>
-  <div class="ver-card current">
-    <div class="ver-header"><span class="ver-name">V5.7.2: Score Gauges &amp; Nav Fix</span><span class="ver-meta">Apr 4 &middot; ~2,840 lines &middot; 266 KB &middot; <span class="tag tag-cyan">Current</span></span></div>
-    <div class="ver-desc">Real-time score gauges in compare header, postMessage IPC, overview navigation fix.</div>
+  <div class="ver-card twin">
+    <div class="ver-header"><span class="ver-name">V5.7.2: Score Gauges &amp; Nav Fix</span><span class="ver-meta">Apr 4 &middot; ~2,840 lines &middot; 266 KB</span></div>
+    <div class="ver-desc">Real-time score gauges in compare header, postMessage IPC, overview navigation fix. Follow-up patch on Apr 6 replaced the single-shot compare-close flag with a sticky version after a random-reopen bug surfaced in field testing. Detail in <a href="#phase8">&sect;11 Phase 8</a>.</div>
     <ul>
       <li>Live composite score circles per session (color-coded with rating label)</li>
       <li>postMessage-based score updates (works on file:// protocol unlike contentDocument)</li>
       <li>Overview button re-opens active compare session instead of navigating away</li>
-      <li><code>compareClosingIntentional</code> flag prevents exit button reopen loop</li>
+      <li><code>compareClosingIntentional</code> flag prevents exit button reopen loop (initial fix)</li>
+      <li><strong>Apr 6 follow-up:</strong> Replaced single-shot flag with sticky <code>compareUserClosed</code>; five-edit patch fixed a latent bug where compare would spontaneously reopen on any navigation after the first <code>showPage('overview')</code> call. Verified live in Chrome on Apr 8 across all four close/reopen sequences.</li>
     </ul>
+  </div>
+  <div class="ver-card twin">
+    <div class="ver-header"><span class="ver-name">V5.7.3: Financial-Logic Fix Pass</span><span class="ver-meta">Apr 19 &middot; ~2,973 lines &middot; 268 KB</span></div>
+    <div class="ver-desc">Six surgical in-place edits to <code>tesseract_V5_7_2.html</code> addressing findings from the Apr 8 propagation audit and the Apr 9&ndash;14 code-read of <code>recalculate()</code>. No new file; same canonical filename, incremented version tag. Finding-level detail is in <a href="#phase9">&sect;12 Phase 9</a>.</div>
+  </div>
+  <div class="ver-card current">
+    <div class="ver-header"><span class="ver-name">V5.8: Audit Batch, Calendar-Axis Rebuild &amp; Analytics PDF Export</span><span class="ver-meta">Apr 20&ndash;21 &middot; ~3,286 lines &middot; 288 KB &middot; <span class="tag tag-cyan">Current</span></span></div>
+    <div class="ver-desc">New file (<code>tesseract_V5_8.html</code>). Five more fixes from the audit catalogue (C tornado, G deployed equity, H3 RR-basis refinement, D calendar-axis cash-flow) plus two new capabilities: per-stage soft costs (S1&ndash;S6) on Apr 20, and a one-click analytics PDF export on Apr 21 that produces a branded multi-page report of the analytics page and is session-aware in Compare Mode. V5.7.2 preserved untouched for rollback; V5.7.3 edits carried forward. Finding-level detail is in <a href="#phase9">&sect;12 Phase 9</a>.</div>
   </div>
   <h3>Test &amp; Unstable Builds</h3>
   <div class="ver-card unstable">
@@ -774,45 +1026,99 @@ tr:nth-child(even) td { background: #f8f9fa; }
 </div>
 <hr class="sep">
 <!-- ============================================================ -->
-<!-- 13. FEATURE EVOLUTION MATRIX -->
+<!-- 15. FEATURE EVOLUTION MATRIX -->
 <!-- ============================================================ -->
 <div class="section page-break" id="features">
-  <h2>13 &middot; Feature Evolution Matrix</h2>
-  <p>The matrix below shows when each major feature was introduced and carried through subsequent versions.</p>
+  <h2>15 &middot; Feature Evolution Matrix</h2>
+  <p>Every real user-facing feature tagged across versions, ordered top-to-bottom by the release in which it first shipped. A &#10003; means the capability is present in that release; a &ndash; means it had not shipped yet. Features carry forward after their first release. Scroll horizontally on narrow screens &mdash; pinch-to-zoom also works.</p>
   <div class="matrix-wrapper">
-    <table class="matrix">
+    <table class="matrix" style="min-width:960px;">
       <tr>
-        <th style="text-align:left;">Feature</th><th>V3</th><th>V4</th><th>V5.0</th><th>V5.1</th><th>V5.2</th><th>V5.3</th><th>V5.4</th><th>V5.5</th><th>V5.6</th><th>V5.6.2</th><th>V5.6.3</th><th>V5.7.2</th>
+        <th style="text-align:left;min-width:240px;">Feature</th>
+        <th>V3<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">Pivot</span></th>
+        <th>V4<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">Zoned</span></th>
+        <th>V5.0<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">Twin</span></th>
+        <th>V5.1&ndash;5.2<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">Dark</span></th>
+        <th>V5.3<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">Map+DR</span></th>
+        <th>V5.4<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">CC</span></th>
+        <th>V5.6<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">Stable</span></th>
+        <th>V5.6.1<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">FSI</span></th>
+        <th>V5.6.3<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">Compare</span></th>
+        <th>V5.7<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">Brand</span></th>
+        <th>V5.7.1<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">Persist</span></th>
+        <th>V5.7.2<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">Gauges</span></th>
+        <th>V5.7.3<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">Audit&#8209;1</span></th>
+        <th>V5.8<br><span style="font-weight:400;font-size:10px;color:#bdc3c7;">Audit&#8209;2</span></th>
       </tr>
-      <tr><td>6-Stage Cost Breakdown</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>KPI Cards</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>Chart.js Visualizations</td><td class="check">5</td><td class="check">5</td><td class="check">5</td><td class="check">5</td><td class="check">5</td><td class="check">5</td><td class="check">6</td><td class="check">6</td><td class="check">6</td><td class="check">6</td><td class="check">6</td><td class="check">6</td></tr>
-      <tr><td>Zone Selector (9 zones)</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>FSI Calculator</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>Gantt Timeline</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>Health Scoring Table</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>Sensitivity Tornado</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>Tab Navigation</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>Dark Mode</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>Interactive SVG Map</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>DR Strategy (BMC/TDR)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>CC Staging Strategy</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>Shortfall Pulse Animations</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>Project Type Panels</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr><td>Automated Test Suite</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">574</td><td class="check">574</td><td class="check">574</td></tr>
-      <tr style="background:#eaf3ff;"><td><strong>Compare Mode (Dual Session)</strong></td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-      <tr style="background:#eaf3ff;"><td><strong>Persistent Sessions</strong></td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td></tr>
-      <tr style="background:#eaf3ff;"><td><strong>Live Score Gauges (Compare)</strong></td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td></tr>
-      <tr style="background:#eaf3ff;"><td><strong>postMessage IPC</strong></td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>6-stage cost engine (stage-by-stage computation)</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Shortfall detection (monthly inflow &lt; outflow flag)</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Chart.js 5-chart analytics (cost, funding, construction, profit, cumulative)</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Headline KPI cards</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>6-stage grid view</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Composite project health score + rating</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Sensitivity tornado chart</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>9-zone selector with zone-keyed defaults</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>FSI calculator (base / premium / TDR / total)</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Alert banners for threshold breaches</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Gantt timeline (static)</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Health table (per-stage status)</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Tab navigation across stages / overview / analytics / profile</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Dedicated stage pages (one page per stage)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>&ldquo;Digital Twin&rdquo; rebranding</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Dark-mode framework (toggle + baseline styling)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Sticky header (always-visible nav)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Mini Gantt rendered inline on stage pages</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Development Rights strategy &mdash; 4 BMC financing scheme cards</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>BMC / TDR split slider with live funding-mix recompute</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Interactive Mumbai SVG zone map (hover / active / blur states)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>CC (Commencement Certificate) staging strategy</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Complete dark-mode coverage (62+ overrides)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Shortfall KPI animations</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>KPI animation polish + expanded Gantt (sub-stage markers)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Native macOS Electron app (.dmg, context-isolated)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Node.js Express backend API (port 3562)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>SQLite persistence with offline-first fallback to hardcoded data</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>USD currency variant for international investor presentations</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Base FSI = 1.35 override for Redev / SRA (DCPR 2034 &sect;33(7)(B))</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Dual-session compare overlay (Session A / Session B)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Iframe isolation &mdash; fully independent dashboard instances</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Session A/B colour accent bars (blue / green)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Dark-mode sync across iframes (postMessage)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Embedded-mode rendering (header + user tab auto-hide inside panes)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>TESSERACT TWIN branded compare header with SVG logo</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Single user-profile mini-avatar in compare header</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Universal dark-mode toggle in compare header</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Session persistence across overlay show / hide</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Active session &rarr; right pane (B); fresh &rarr; left pane (A)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Dual session info cards on User Profile page</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Per-session &ldquo;Sample&rdquo; test buttons in compare header</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Live composite score gauges in compare header (colour-coded per session)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>postMessage IPC for cross-session score updates (file:// safe)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Overview button re-opens active compare session instead of killing it</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Sticky compare-close flag &mdash; prevents random overlay reopen</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Pre-sale sweep offsets drawn debt before interest</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Final-stage absorption capped to unsold inventory</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>annROE annualisation includes delay window</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Cash-Flow IRR KPI (bisection on monthly NPV=0)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Redev stamp duty on Development Agreement basis (Stamp Act &sect;5)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Responsive 4-column KPI grid (tablet / phone reflow)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>MOIC and annROE on deployed-equity basis</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Calendar-axis cash-flow generator (overlap-aware)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Sensitivity tornado magnitudes calibrated to standard shock bases</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Rehab stamp duty on Ready Reckoner basis</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Per-stage Other Soft Costs input card (S1&ndash;S6)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Analytics PDF export &mdash; cover + 5 charts + tornado + cash-flow table</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td></tr>
+      <tr><td>PDF session-aware in Compare Mode (Session A/B tag + filename suffix)</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="cross">&ndash;</td><td class="check">&#10003;</td></tr>
     </table>
   </div>
+  <p style="color:var(--muted);font-size:12px;margin-top:12px;"><strong>Reading the matrix:</strong> each column answers &ldquo;what can a user do in this release?&rdquo; The staircase runs top-left to bottom-right &mdash; early features have a full row of ticks, late features sit at the bottom with mostly dashes. Audit-driven financial refinements (V5.7.3, V5.8) change the reported numbers rather than adding new UI; they&rsquo;re listed because a user sees different outputs for the same inputs.</p>
 </div>
-<hr class="sep">
+
 <!-- ============================================================ -->
-<!-- 14. ARCHITECTURE -->
+<!-- 16. ARCHITECTURE -->
 <!-- ============================================================ -->
 <div class="section page-break" id="architecture">
-  <h2>14 &middot; Technical Architecture</h2>
+  <h2>16 &middot; Technical Architecture</h2>
   <h3>6-Stage Development Lifecycle</h3>
   <div class="arch-diagram">
     <div class="stage-flow">
@@ -893,10 +1199,10 @@ tr:nth-child(even) td { background: #f8f9fa; }
 </div>
 <hr class="sep">
 <!-- ============================================================ -->
-<!-- 15. RESEARCH DOCUMENTS -->
+<!-- 17. RESEARCH DOCUMENTS -->
 <!-- ============================================================ -->
 <div class="section page-break" id="research">
-  <h2>15 &middot; Research &amp; Reference Documents Produced</h2>
+  <h2>17 &middot; Research &amp; Reference Documents Produced</h2>
   <table>
     <tr><th>Document</th><th>Date</th><th>Purpose</th></tr>
     <tr><td>Mumbai_RE_Cost_Structure_INR.docx</td><td>Feb 17</td><td>Per-sqft cost benchmarks for all development stages</td></tr>
@@ -918,14 +1224,14 @@ tr:nth-child(even) td { background: #f8f9fa; }
 </div>
 <hr class="sep">
 <!-- ============================================================ -->
-<!-- 16. LESSONS LEARNED -->
+<!-- 18. LESSONS LEARNED -->
 <!-- ============================================================ -->
 <div class="section page-break" id="lessons">
-  <h2>16 &middot; Lessons Learned</h2>
+  <h2>18 &middot; Lessons Learned</h2>
   <h3>Architecture: Simplicity Wins</h3>
   <p>The 6-stage gate structure was chosen on day one and never changed. The V5.0 experiment with 10 finer-grained phases confirmed a counterintuitive principle: more granularity does not always produce better insight. Building the entire dashboard as a single HTML file was unconventional but practical: it can be opened in any browser, shared as an email attachment, embedded in Electron, or served from a static host with zero dependency management.</p>
   <h3>Iframe Isolation Over Refactoring</h3>
-  <p>When Compare Mode required running two independent sessions, the instinct was to refactor all ~30 global variables into an instance-based architecture. Instead, we chose iframe isolation: each session runs in its own iframe with complete state separation. The cost was postMessage-based IPC for dark mode sync, score updates, and sample triggers. The benefit was zero risk of breaking <code>recalculate()</code> or any of the ~470 lines of financial engine logic. Sometimes the pragmatic architecture beats the elegant one.</p>
+  <p>When Compare Mode required running two independent sessions, the instinct was to refactor the dashboard into an instance-based architecture. Instead, we chose iframe isolation: each session runs in its own iframe with complete state separation. The cost was postMessage-based IPC for dark mode sync, score updates, and sample triggers. The benefit was zero risk of disturbing the financial engine. Sometimes the pragmatic architecture beats the elegant one.</p>
   <h3>Dual-Track Validation</h3>
   <p>Maintaining both Excel and HTML versions throughout provided a critical cross-validation mechanism. When the HTML dashboard produced a different result from the Excel model, it always pointed to a bug in one or the other.</p>
   <h3>The Cost of Not Testing</h3>
@@ -934,6 +1240,12 @@ tr:nth-child(even) td { background: #f8f9fa; }
   <p>The score gauge bug in V5.7.2 taught a valuable lesson: <code>contentDocument</code> access works fine on <code>http://</code> but is blocked on <code>file://</code> due to browser security policies. The fix (postMessage) works universally. Always test on the actual deployment protocol, not just localhost.</p>
   <h3>Domain Expertise Shapes Software</h3>
   <p>The FSI/DR/TDR module illustrates how industry knowledge transforms a model. Conversations with Mumbai development professionals revealed the complexity of BMC premium financing, TDR market dynamics, and regulatory nuances that no amount of pure engineering could have anticipated.</p>
+  <h3>Black-Box and White-Box Audits Catch Different Bugs</h3>
+  <p>Phase 9 demonstrated that the two audit techniques are complementary, not redundant. The April 8 live-perturbation audit (black-box) could prove every input was wired and could flag <code>absRate</code> as propagation-suspect, but it could not see <em>why</em> the logic was wrong inside <code>recalculate()</code>. The April 19 code-read audit (white-box) caught the absorption-cap issue, the pre-sale debt double-service, and the stamp-duty base mis-specification &mdash; none of which would surface from input-output diffing alone. The rule that emerged: perturb first to narrow the suspect set, then read the code to diagnose. Running them sequentially found five fixable findings where either one alone would have found two.</p>
+  <h3>Calendar Axes Matter for Financial Engines</h3>
+  <p>The V5.8 real cash-flow IRR rewrite reinforced a lesson that applies to any multi-period financial model: the calendar time axis has to be a first-class concept, not a byproduct of iterator arithmetic. In a stage-gated project with overlapping phases &mdash; typical of Mumbai phased Redevelopment &mdash; a serial time axis and a calendar time axis can disagree by a month or two, which is enough to materially shift discounted metrics. Making the axis explicit fixed that class of subtle drift at the source rather than per-KPI.</p>
+  <h3>Field Testing Reveals Silent Failures</h3>
+  <p>Webtech Realty began using the V5.7.2 dashboard for live deal screening in early April. Within days, feedback surfaced the &ldquo;I changed a parameter and nothing happened&rdquo; complaint &mdash; which audit work eventually traced to integer-month rounding on stage-duration inputs and to the debt facility ceiling absorbing small perturbations. These were correct financial behaviors with insufficient UI affordance. A user who trusts the tool and sees silent behavior will stop trusting the tool. The V6 roadmap now includes affordances (scenario-gated input dimming, a &ldquo;drawn vs facility&rdquo; badge, integer snap) that pure code review would never have prioritized.</p>
   <div style="text-align:center;margin-top:60px;padding-top:20px;border-top:2px solid var(--border);">
     <div style="margin-bottom:12px;">
       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:40px;height:40px;opacity:0.25;">
@@ -953,12 +1265,19 @@ tr:nth-child(even) td { background: #f8f9fa; }
         <line x1="33" y1="38" x2="50" y2="50" stroke="#66bb6a" stroke-width="1.3"/>
       </svg>
     </div>
-    <p style="color:var(--muted);font-style:italic;font-size:14px;">Active Build Log &mdash; Last Updated April 4, 2026</p>
+    <p style="color:var(--muted);font-style:italic;font-size:14px;">Active Build Log &mdash; Last Updated April 21, 2026</p>
     <p style="color:var(--navy);font-weight:600;">Harshit Chhajed &middot; TESSERACT TWIN</p>
     <p style="color:var(--muted);font-size:13px;">See what others can't.</p>
   </div>
 </div>
 </div><!-- container -->
+
+<!-- Floating nav: back-to-top + jump-to-TOC (print-hidden) -->
+<nav class="fab-nav no-print" id="fabNav" aria-label="Page navigation">
+  <a href="#toc" class="fab-btn" title="Jump to table of contents" aria-label="Jump to table of contents"><span class="fab-label">TOC</span></a>
+  <a href="#top" class="fab-btn" title="Back to top" aria-label="Back to top">&uarr;</a>
+</nav>
+
 <!-- ============================================================ -->
 <!-- CHART.JS SCRIPTS -->
 <!-- ============================================================ -->
@@ -966,27 +1285,29 @@ tr:nth-child(even) td { background: #f8f9fa; }
 // Mobile detection for chart config
 const isMobile = window.innerWidth <= 768;
 
-// Complexity growth chart — updated with Phase 8 versions
+// Complexity growth chart — updated through Phase 9 (V5.8)
 new Chart(document.getElementById('complexityChart'), {
   type: 'line',
   data: {
-    labels: ['Prelim','Base v1','V2','V3 (HTML)','V4','V5.0','V5.1','V5.2','V5.3','V5.4','V5.5','V5.6','V5.6.1','V5.6.2','V5.6.3','V5.7','V5.7.1','V5.7.2'],
+    labels: ['Prelim','Base v1','V2','V3 (HTML)','V4','V5.0','V5.1','V5.2','V5.3','V5.4','V5.5','V5.6','V5.6.1','V5.6.2','V5.6.3','V5.7','V5.7.1','V5.7.2','V5.7.3','V5.8'],
     datasets: [
       {
         label: 'HTML Lines of Code',
-        data: [null,null,null,690,900,2013,1273,1449,1825,2192,2192,2557,2559,2559,2700,2760,2800,2840],
+        data: [null,null,null,690,900,2013,1273,1449,1825,2192,2192,2557,2559,2559,2700,2760,2800,2840,2973,3040],
         borderColor: '#2a6496',
         backgroundColor: 'rgba(42,100,150,0.08)',
         fill: true,
         tension: 0.3,
         pointRadius: 5,
         pointBackgroundColor: function(ctx) {
-          return ctx.dataIndex >= 14 ? '#4da6ff' : '#2a6496';
+          if (ctx.dataIndex >= 18) return '#ff8c42'; // Phase 9 audit-era (V5.7.3, V5.8) — warm accent
+          if (ctx.dataIndex >= 14) return '#4da6ff';
+          return '#2a6496';
         },
       },
       {
         label: 'Excel Formulas',
-        data: [20,120,358,358,478,56,180,350,420,480,500,500,500,500,500,500,500,500],
+        data: [20,120,358,358,478,56,180,350,420,480,500,500,500,500,500,500,500,500,500,500],
         borderColor: '#27ae60',
         backgroundColor: 'rgba(39,174,96,0.06)',
         fill: true,
@@ -997,7 +1318,7 @@ new Chart(document.getElementById('complexityChart'), {
       },
       {
         label: 'Feature Count',
-        data: [1,3,5,8,14,16,18,19,22,26,26,27,28,28,31,33,35,38],
+        data: [1,3,5,8,14,16,18,19,22,26,26,27,28,28,31,33,35,38,40,46],
         borderColor: '#e67e22',
         tension: 0.3,
         pointRadius: 4,
@@ -1017,15 +1338,15 @@ new Chart(document.getElementById('complexityChart'), {
     }
   }
 });
-// File size chart — updated with Phase 8 versions
+// File size chart — updated through Phase 9 (V5.8)
 new Chart(document.getElementById('sizeChart'), {
   type: 'bar',
   data: {
-    labels: ['V3','V4','V5.0','V5.1','V5.2','V5.3','V5.4','V5.5','V5.6','V5.6.2','V5.6.3','V5.7','V5.7.1','V5.7.2'],
+    labels: ['V3','V4','V5.0','V5.1','V5.2','V5.3','V5.4','V5.5','V5.6','V5.6.2','V5.6.3','V5.7','V5.7.1','V5.7.2','V5.7.3','V5.8'],
     datasets: [{
       label: 'File Size (KB)',
-      data: [32,47,80,82,94,201,224,224,246,246,254,261,264,266],
-      backgroundColor: ['#3498db','#3498db','#2ecc71','#2ecc71','#2ecc71','#e67e22','#e67e22','#e67e22','#9b59b6','#9b59b6','#4da6ff','#4da6ff','#4da6ff','#4da6ff'],
+      data: [32,47,80,82,94,201,224,224,246,246,254,261,264,266,268,270],
+      backgroundColor: ['#3498db','#3498db','#2ecc71','#2ecc71','#2ecc71','#e67e22','#e67e22','#e67e22','#9b59b6','#9b59b6','#4da6ff','#4da6ff','#4da6ff','#4da6ff','#ff8c42','#ff8c42'],
       borderRadius: 4,
     }]
   },
@@ -1108,6 +1429,37 @@ new Chart(document.getElementById('testChart'), {
     cutout: '50%',
   }
 });
+</script>
+
+<!-- ============================================================ -->
+<!-- UI WIRING: fab-nav visibility + expand-all toggles -->
+<!-- ============================================================ -->
+<script>
+(function(){
+  // Floating nav: fade in after scrolling past threshold
+  var fab = document.getElementById('fabNav');
+  if (fab) {
+    var onScroll = function(){
+      if (window.scrollY > 300) fab.classList.add('visible');
+      else fab.classList.remove('visible');
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+
+  // Expand-all / collapse-all toggle for <details> within a section
+  document.querySelectorAll('[data-details-toggle]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var section = btn.closest('.section');
+      if (!section) return;
+      var items = section.querySelectorAll('details');
+      var pressed = btn.getAttribute('aria-pressed') === 'true';
+      items.forEach(function(d){ d.open = !pressed; });
+      btn.setAttribute('aria-pressed', String(!pressed));
+      btn.innerHTML = pressed ? '\u25B8 Expand all details' : '\u25BE Collapse all details';
+    });
+  });
+})();
 </script>
 </body>
 </html>
